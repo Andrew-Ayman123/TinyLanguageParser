@@ -14,11 +14,8 @@ def browse_file():
           input_field.config(state='disabled')
 
 def generate_canvas():
-    input_content= input_field.get("1.0", "end")
-    graph_area.delete("all")
-    
-    root_node=generate_structure()
-    draw_canvas(root_node, 100, 50, 100, 100)
+    input_content = input_field.get("1.0", "end")
+    return [(line.split(',')) for line in input_content.split('\n')]
 
 
 def draw_canvas(node:Node, x:int, y:int, spacing_x:int, spacing_y:int)->int:
