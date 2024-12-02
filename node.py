@@ -1,53 +1,56 @@
 class Node:
-  def __init__(self,data="") -> None:
-    self.children:list[Node]=[]
-    self.next:Node=None # showing the next stattment
-    self.is_square:bool=True
-    self.data:str=data
+    def __init__(self, data="", isSqare=True) -> None:
+        self.children: list[Node] = []
+        self.next: Node = None  # showing the next stattment
+        self.is_square: bool = isSqare
+        self.data: str = data
 
-def generate_structure()->Node:
-  # Create the root node
-  root = Node("read\n(x)")
+    def addChild(self, child: "Node"):
+        self.children.append(child)
 
-  # Create child nodes for the root node
-  op_node = Node("op\n<-")
-  op_node.is_square=False
-  assign_node = Node("assign\n(fact)")
-  root.children.append(op_node)
-  root.children.append(assign_node)
+    def setNext(self, next: "Node"):
+        self.next = next
 
-  # Create child nodes for the op_node
-  const_node1 = Node("const\n(0)")
-  id_node1 = Node("id\n(x)")
-  op_node.children.append(const_node1)
-  op_node.children.append(id_node1)
 
-  # Create child nodes for the assign_node
-  const_node2 = Node("const\n(1)")
-  assign_node.children.append(const_node2)
+########### Functions to create specific nodes ##############
 
-  # Create a repeat node and connect it to the assign_node
-  repeat_node = Node("repeat")
-  assign_node.next = repeat_node
 
-  # Create child nodes for the repeat_node
-  assign_node2 = Node("assign\n(x)")
-  op_node2 = Node("op\n=")
-  op_node2.is_square=False
-  repeat_node.children.append(assign_node2)
-  repeat_node.children.append(op_node2)
+'''Takes as input the identifier of the variable being read and returns a node representing the read statement'''
+def createReadNode(identifier: str) -> Node:
+    node = Node(f"read({identifier})", True)
+    return node
 
-  # Create child nodes for the op_node2
-  id_node2 = Node("id\n(x)")
-  const_node3 = Node("const\n(1)")
-  op_node2.children.append(id_node2)
-  op_node2.children.append(const_node3)
+'''Takes as input the identifier of the variable being assigned returns a node representing the assign statement'''
+def createAssignNode(identifier: str) -> Node:
+    node = Node(f"assign({identifier})", True)
+    return node
 
-  # Create a write node and connect it to the repeat_node
-  write_node = Node("write")
-  repeat_node.next = write_node
+'''Creates a node representing the write statement'''
+def createWriteNode() -> Node:
+    node = Node("write", True)
+    return node
 
-  # Create child nodes for the write_node
-  id_node3 = Node("id\n(fact)")
-  write_node.children.append(id_node3)
-  return root
+'''Creates a node representing the if statement'''
+def createIfNode() -> Node:
+    node = Node("if", True)
+    return node
+
+'''Creates a node representing the repeat statement'''
+def createRepeatNode() -> Node:
+    node = Node("repeat", True)
+    return node
+
+'''Take as input the operator involved in an OP and returns a node representing the operator'''
+def createOpNode(operator: str) -> Node:
+    node = Node(f"op({operator})", False)
+    return node
+
+'''Takes as input the identifier of the variable involved in an OP returns a node representing the variable'''
+def createIDNode(identifier: str) -> Node:
+    node = Node(f"id({identifier})", False)
+    return node
+
+'''Takes as input the value of the constant involved in an OP returns a node representing the constant'''
+def createConstNode(value: str) -> Node:
+    node = Node(f"const({value})", False)
+    return node
