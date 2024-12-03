@@ -3,7 +3,7 @@ from tkinter import ttk
 from tkinter import filedialog
 from PIL import Image, ImageTk
 import os
-from node import Node,generate_structure
+from node import Node #generate_structure
 def browse_file():
     file_path = filedialog.askopenfilename()
     if file_path:
