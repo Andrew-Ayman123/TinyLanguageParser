@@ -3,7 +3,9 @@ from tkinter import ttk
 from tkinter import filedialog
 from PIL import Image, ImageTk
 import os
-from node import Node
+from node import *
+
+
 def browse_file():
     file_path = filedialog.askopenfilename()
     if file_path:
@@ -18,8 +20,16 @@ def generate_canvas():
     graph_area.delete("all")
     token_list = split_input(input_content)
     print(token_list)
-    # root_node = program()
-    # draw_canvas(root_node, 100, 50, 100, 100)
+    root_node = createAssignNode("x")
+    op_node = createOpNode("<")
+    id_node = createIDNode("x")
+    id_node2 = createIDNode("y")
+
+    root_node.setNext(op_node)
+    op_node.addChild(id_node)
+    op_node.addChild(id_node2)
+
+    draw_canvas(root_node, 100, 50, 100, 100)
 
 def split_input(input_content):
     return [tuple(line.split(',')) for line in input_content.split('\n')]
