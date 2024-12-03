@@ -1,246 +1,297 @@
-from node import createIfNode,createAssignNode,createReadNode,createWriteNode,createIDNode,createRepeatNode,createOpNode, Node
+from itertools import repeat
 
-        
+from node import *
+
 list_of_tokens = [
     ("read", "READ"),
-    ("x", "IDENTIFIER"),
-    (";", "SEMICOLON"),
-    ("if", "IF"),
-    ("<", "LESSTHAN"),
-    ("then", "THEN"),
-    ("repeat", "REPEAT"),
-    (":=", "ASSIGN"),
-    ("*", "MULT"),
-    ("-", "MINUS"),
-    ("until", "UNTIL"),
-    ("=", "EQUAL"),
-    ("write", "WRITE"),
-    ("end", "END")
-    ]
+
+]
+counter = 0
+
 def is_empty(list):
-        return len(list) == 0
+    return len(list) == 0
+
+
 def peek_Type():
     if list_of_tokens:
         return list_of_tokens[0][1]
     return None
+
+
 def peek_Value():
     if list_of_tokens:
         return list_of_tokens[0][0]
     return None
-           
+
+
 def next_token():
-        if list_of_tokens:
+    if list_of_tokens:
+        return list_of_tokens[0]
 
-            list_of_tokens.pop(0)
 
-def match(current_token_type, expected_token_type):
-    
-    return current_token_type == expected_token_type
+def match(expected_token_type):
+    global counter
+    if not list_of_tokens:
+        return createErrorNode("Error, expected " + expected_token_type + " but got nothing"+" at line number "+str(counter))
+    if list_of_tokens[0][1] == expected_token_type:
+        list_of_tokens.pop(0)
+        counter+=1
+        return True
+    else:
+        return createErrorNode("Error, expected " + expected_token_type + " but got " + list_of_tokens[0][1] + " at line number "+str(counter))
+
 
 def program():
-    
-    child=stmtSequence()
-    if child !="ERROR":
+    child = stmtSequence()
+    if child != "ERROR":
         return child
     else:
-        return "ERROR" 
-  #statement{;statement}   
+        return "ERROR"
+        # statement{;statement}
+
+
 def stmtSequence():
-    temp=statement();
-    root=temp;  
-    while True:
-        if is_empty(list_of_tokens()):
-            break   
-        token,token_type=list_of_tokens[0] 
-        
-        if list_of_tokens and  token_type=="SEMICOLON":
-            list_of_tokens.pop(0)
-            siblings= statement()
-            temp.setNext(siblings)
-        else:
-            break
+    root = statement()
+    temp = root
+    token_type = peek_Type()
+    while token_type == "SEMICOLON":
+        match_result = match("SEMICOLON")
+        if match_result != True:
+            return match_result
+        new_stmt = statement()
+        temp.setNext(new_stmt)
+        temp = new_stmt
+        token_type = peek_Type()
     return root
-    #statament -> if-stmt | repeat-stmt | assign-stmt |read-stmt |  write-stmt
+    # statament -> if-stmt | repeat-stmt | assign-stmt |read-stmt |  write-stmt
+
+
 def statement():
-        
-    if peek_Type()=="IF":
-        tmp=if_stmt()
-    elif peek_Type()=="REPEAT":
-        tmp=repeat_stmt()
-    elif peek_Type()=="READ":
-        tmp=read_stmt()
-    elif peek_Type()=="WRITE":
-        tmp=write_stmt()
-    elif peek_Type()=="IDENTIFIER":
-        tmp=assign_stmt()
+    if peek_Type() == "IF":
+        tmp = if_stmt()
+    elif peek_Type() == "REPEAT":
+        tmp = repeat_stmt()
+    elif peek_Type() == "READ":
+        tmp = read_stmt()
+    elif peek_Type() == "WRITE":
+        tmp = write_stmt()
+    elif peek_Type() == "IDENTIFIER":
+        tmp = assign_stmt()
     else:
         return "ERROR"
-    
+
     return tmp
-#if -stmt → if exp then stmt-sequence end    
+
+
+# if -stmt → if exp then stmt-sequence end
 def if_stmt():
-    node_tmp=createIfNode()
-    
-    next_token()
-    node_exp=exp()
-    
-    node_tmp.addChild(node_exp)
-    
-    if match(peek_Type(),"THEN"):
-        next_token()
-        
-        stmt_node=stmtSequence()
-        node_tmp.addChild(stmt_node)
-    else:
-        return "ERROR"
-    
-    if match(peek_Type(),"ELSE"):
-        
-        next_token()
-        stmt_node=stmtSequence()
-        node_tmp.addChild(stmt_node)
-          
-    if match(peek_Type(),"END"):
-    
-        next_token()
-    else: 
-        return "ERROR"
-    
-    return node_tmp    
-#exp -> simple-exp comparison-op simple-exp | simple-exp      
-def exp():
-      nodeComparisonOp =createOpNode("comparison")
-      nodeSimpleExp1 = simple_exp()
-      
-      nodeComparisonOp.addChild(nodeSimpleExp1)
-      #token_d=next_token()
-      token_type=peek_Type()
-      if token_type in["EQUAL","LESSTHAN"]:
-          nodeComparisonOp.data=peek_Value()
-          
-          next_token()
-          nodeSimpleExp2=simple_exp()
-          
-          nodeComparisonOp.addChild(nodeSimpleExp2)
-      return nodeComparisonOp
-          
-#simple-exp -> term {addop term}
+    match_result = match("IF")
+    if match_result != True:
+        return match_result
+    if_node = createIfNode()
+    exp_node = exp()
+    if_node.addChild(exp_node)
+    match_result = match("THEN")
+    if match_result != True:
+        return match_result
+    stmt_node = stmtSequence()
+    if_node.addChild(stmt_node)
+
+    if peek_Type() == "ELSE":
+        match_result = match("ELSE")
+        if match_result != True:
+            return match_result
+        stmt_node = stmtSequence()
+        if_node.addChild(stmt_node)
+
+    match_result = match("END")
+    if match_result != True:
+        return match_result
+
+    return if_node
+
+
+# comparison-op -> = | <
+def comparison_op():
+    token_t = peek_Type()
+    token_val = peek_Value()
+    match_result = match(token_t)
+    if match_result != True:
+        return match_result
+    op_node = createOpNode(token_val)
+    return op_node
+
+
+# simple-exp -> term {addop term}
 def simple_exp():
-    nodeTerm=term()
-    #token_d=next_token()
-    token_type=peek_Type()
-    while ((list_of_tokens) and (match(token_type,"PLUS") or  match(token_type,"MINUS"))):
-        nodeOp=createOpNode(peek_Value())
-        
-        nodeOp.addChild(nodeTerm)
-        next_token()
-        nodeTerm2=term()
+    temp = term()
+    nodeTerm = temp
+    # token_d=next_token()
+    token_type = peek_Type()
+    while token_type == "PLUS" or token_type == "MINUS":
+        nodeOp = addop()
+        nodeOp.addChild(temp)
+        nodeTerm2 = term()
         nodeOp.addChild(nodeTerm2)
-        
-        nodeTerm=nodeOp
-     
-    return nodeTerm                         
-          
-      
-#term -> factor {mulop factor}
+        token_type = peek_Type()
+        temp = nodeOp
+
+    nodeTerm = temp
+    return nodeTerm
+
+
+# addop -> + | -
+def addop():
+    token_t = peek_Type()
+    token_val = peek_Value()
+    match_result = match(token_t)
+    if match_result != True:
+        return match_result
+    op_node = createOpNode(token_val)
+    return op_node
+
+
+# term -> factor {mulop factor}
 def term():
-    nodefactor=factor()
-    #token_d=next_token()
-    token_type=peek_Type()
-    while ((list_of_tokens) and (match(token_type,"MULT") or  match(token_type,"DIV"))):  
-        mulop=createOpNode(peek_Value())
-        
-        mulop.addChild(nodefactor)
-        next_token()
-        nodeFactor=factor()
-        
-        mulop.addChild(nodeFactor)
-        nodefactor=mulop
-        
-    return nodefactor   
-        
+    node_factor = factor()
+    token_type = peek_Type()
+    while token_type == "MULT" or token_type == "DIV":
+        nodeOp = mulop()
+        nodeOp.addChild(node_factor)
+        nodeTerm2 = factor()
+        nodeOp.addChild(nodeTerm2)
+        token_type = peek_Type()
+        node_factor = nodeOp
+
+    return node_factor
+
+
+# mulop -> * | /
+def mulop():
+    token_t = peek_Type()
+    token_val = peek_Value()
+    match_result = match(token_t)
+    if match_result != True:
+        return match_result
+    op_node = createOpNode(token_val)
+    return op_node
+
+
 def factor():
-    
     node_temp = None
 
     # Check the type of the current token
     token_type = peek_Type()
+    token_val = peek_Value()
+
     if token_type == "OPENBRACKET":
-        next_token()
+        match_result = match(token_type)
+        if match_result != True:
+            return match_result
         node_exp = exp()
         node_temp = node_exp
-        if match(peek_Type(), "CLOSEDBRACKET"):
-            next_token()  
-    elif token_type == "NUMBER" or token_type == "IDENTIFIER":
-        node_temp = createIDNode(peek_Value())
-        next_token()  
-    else:
-        return "ERROR"
+        match_result = match("CLOSEBRACKET")
+        if match_result != True:
+            return match_result
 
+    elif token_type == "NUMBER":
+        match_result = match(token_type)
+        if match_result != True:
+            return match_result
+        node_temp = createConstNode(token_val)
+    elif token_type == "IDENTIFIER":
+        match_result = match(token_type)
+        if match_result != True:
+            return match_result
+        node_temp = createIDNode(token_val)
+    else:
+        return createErrorNode("ERROR, expected NUMBER, IDENTIFIER or OPENBRACKET but got " + token_type)
     return node_temp
 
-#repeat->stmt-sequence until exp
+
+# repeat->stmt-sequence until exp
 def repeat_stmt():
-    r_node=createRepeatNode()
-   
-    next_token()
-    
-    token_type=peek_Type()
-    
-    b_node=stmtSequence()
-    r_node.addChild(b_node)
-    if match(token_type,"UNTIL"):
-        next_token()
-        e_node=exp()
-        r_node.addChild(e_node)
-    else:
-        return "ERROR"
-    
-    return r_node 
-    
-    
-#read - > read identifer
+    match_result = match("REPEAT")
+    if match_result != True:
+        return match_result
+    r_node = createRepeatNode()
+    stmt_node = stmtSequence()
+    r_node.addChild(stmt_node)
+    match_result = match("UNTIL")
+    if match_result != True:
+        return match_result
+    exp_node = exp()
+    r_node.addChild(exp_node)
+
+    return r_node
+
+
+# read - > read identifer
 def read_stmt():
-    read_stmt =createReadNode()
-    
-    next_token()
-    
-    token_type=peek_Type()
-    if match(token_type,"IDENTIFIER"):
-        read_stmt.addChild(createIDNode(peek_Value()))
-        next_token()
-    else:
-        return "ERROR"
-    return read_stmt
-#write -> write exp
+    match_result = match("READ")
+    if match_result != True:
+        return match_result
+    identifier = peek_Value()
+    match_result = match("IDENTIFIER")
+    if match_result != True:
+        return match_result
+    read_node = createReadNode(identifier)
+
+    return read_node
+
+
+# write -> write exp
 def write_stmt():
-    w_root=createWriteNode()
-    next_token()
-    expNode=exp()
+    match_result = match("WRITE")
+    if match_result != True:
+        return match_result
+    w_root = createWriteNode()
+    expNode = exp()
     w_root.addChild(expNode)
-    
+
     return w_root
 
-#assignStmt -> Identifier := exp
-def assign_stmt():
-    assign_node=createAssignNode("assign") 
 
-    token_type=peek_Type()
-    if match(token_type,"IDENTIFIER"):
-        assign_node.data = createIDNode(peek_Value())
-        next_token()
-        token_type=peek_Type()
-        if match(token_type,"ASSIGN"):
-            next_token()
-            exp_node=exp()
-            assign_node.addChild(exp_node)
-        else:
-            return "ERROR"
-    else:
-        return "ERROR"
+# assignStmt -> Identifier := exp
+def assign_stmt():
+    token, token_t = next_token()
+    match_result = match("IDENTIFIER")
+    if match_result != True:
+        return match_result
+    assign_node = createAssignNode(token)
+
+    match_result = match("ASSIGN")
+    if match_result != True:
+        return match_result
+    exp_node = exp()
+    assign_node.addChild(exp_node)
+
     return assign_node
 
-        
-    
+
+# exp -> simple-exp comparison-op simple-exp | simple-exp
+def exp():
+    temp_node = simple_exp()
+    root_node = temp_node
+    if (peek_Type() in ["EQUAL", "LESSTHAN"]):
+        root_node = comparison_op()
+        root_node.addChild(temp_node)
+        temp_node = simple_exp()
+        root_node.addChild(temp_node)
+
+    return root_node
 
 
+def contains_errors(node: Node):
+    if node.isError:
+        return node.data
+    for child in node.children:
+        result = contains_errors(child)
+        if result:
+            return result
+    if node.next:
+        result = contains_errors(node.next)
+        if result:
+            return result
+
+    return False
