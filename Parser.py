@@ -7,6 +7,8 @@ list_of_tokens = [
 
 ]
 counter = 0
+errorFlag = False
+errorNode : Node = None
 
 def is_empty(list):
     return len(list) == 0
@@ -31,23 +33,36 @@ def next_token():
 
 def match(expected_token_type):
     global counter
+    global errorFlag
+    global errorNode
     if not list_of_tokens:
-        return createErrorNode("Error, expected " + expected_token_type + " but got nothing"+" at line number "+str(counter))
+        if not errorFlag:
+            errorNode = createErrorNode("Error, expected " + expected_token_type + " but got nothing"+" at line number "+str(counter))
+        errorFlag = True
+        return False
     if list_of_tokens[0][1] == expected_token_type:
         list_of_tokens.pop(0)
         counter+=1
         return True
     else:
-        return createErrorNode("Error, expected " + expected_token_type + " but got " + list_of_tokens[0][1] + " at line number "+str(counter))
+        if not errorFlag:
+            errorNode = createErrorNode("Error, expected " + expected_token_type + " but got " + list_of_tokens[0][1] + " at line number "+str(counter))
+        errorFlag = True
+        return False
 
 
 def program():
+    global errorFlag
+    global errorNode
+    global counter
+    counter = 0
+    errorNode = None
+    errorFlag = False
     child = stmtSequence()
-    if child != "ERROR":
+    if not errorFlag:
         return child
     else:
-        return "ERROR"
-        # statement{;statement}
+        return errorNode
 
 
 def stmtSequence():
@@ -67,6 +82,8 @@ def stmtSequence():
 
 
 def statement():
+    global errorFlag
+    global errorNode
     if peek_Type() == "IF":
         tmp = if_stmt()
     elif peek_Type() == "REPEAT":
@@ -78,8 +95,10 @@ def statement():
     elif peek_Type() == "IDENTIFIER":
         tmp = assign_stmt()
     else:
-        return "ERROR"
-
+        if not errorFlag:
+            errorNode = createErrorNode("ERROR, expected IF, REPEAT, READ, WRITE or IDENTIFIER but got " + peek_Type()+" at line number "+str(counter))
+        errorFlag = True
+        return
     return tmp
 
 
@@ -178,6 +197,7 @@ def mulop():
 
 
 def factor():
+
     node_temp = None
 
     # Check the type of the current token
@@ -205,7 +225,8 @@ def factor():
             return match_result
         node_temp = createIDNode(token_val)
     else:
-        return createErrorNode("ERROR, expected NUMBER, IDENTIFIER or OPENBRACKET but got " + token_type)
+        report_error("ERROR, expected NUMBER, IDENTIFIER or OPENBRACKET but got " + token_type+" at line number "+str(counter))
+        return
     return node_temp
 
 
@@ -295,3 +316,11 @@ def contains_errors(node: Node):
             return result
 
     return False
+
+def report_error(error_message):
+    global errorFlag
+    global errorNode
+    if not errorFlag:
+        errorNode = createErrorNode(error_message)
+    errorFlag = True
+    return

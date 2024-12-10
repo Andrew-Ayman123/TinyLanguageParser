@@ -25,17 +25,20 @@ def generate_canvas():
     Parser.list_of_tokens = split_input(input_content)
     print(Parser.list_of_tokens)
     root_node = program()
-    error = contains_errors(root_node)
-    # draw_canvas(root_node, 100, 50, 100, 100)
-    if error:
-        display_string(error)
-        print(error)
+    if root_node.isError:
+        display_string(root_node.data)
     else:
         draw_canvas(root_node, 100, 50, 100, 100)
 
 
 def display_string(text):
-    graph_area.create_text(300, 20, text=text, anchor="center" , fill="red", font=("Helvetica", 12))
+    # graph_area.create_text(300, 20, text=text, anchor="center" , fill="red", font=("Helvetica", 12))
+    graph_area.delete("all")
+    canvas_width = graph_area.winfo_width()
+    canvas_height = graph_area.winfo_height()
+    font_size = min(canvas_width // 20, canvas_height // 20)
+    graph_area.create_text(canvas_width // 2, canvas_height // 2, text=text, anchor="center", fill="red",
+                           font=("Helvetica", font_size))
 
 
 def split_input(input_content):
@@ -73,6 +76,16 @@ def draw_canvas(node: Node, x: int, y: int, spacing_x: int, spacing_y: int) -> i
     return child_x
 
 
+# Update the text size when the canvas size changes
+def update_text_size(event):
+    display_string(errorNode.data)
+
+
+# Update the scroll region when the canvas size changes
+def configure_scroll_region(event):
+    graph_area.configure(scrollregion=graph_area.bbox("all"))
+
+
 root = tk.Tk()
 root.title("Tiny Language Parser")
 
@@ -92,9 +105,37 @@ input_field = tk.Text(root, wrap="word", font=('Courier', 12),
 input_field.grid(row=0, column=0, padx=10, pady=10, sticky='ns')
 input_field.config(state='disabled')
 
-# Create the graph area
-graph_area = tk.Canvas(root, bg='#2c2c2c')
-graph_area.grid(row=0, column=1, columnspan=3, padx=10, pady=10, sticky='nsew')
+'''My Test code for scrollable canvas'''
+# Create the graph area with scrollbars
+graph_frame = tk.Frame(root, bg='#2c2c2c')
+graph_frame.grid(row=0, column=1, columnspan=3, padx=10, pady=10, sticky='nsew')
+
+# Create the canvas
+graph_area = tk.Canvas(graph_frame, bg='#2c2c2c')
+graph_area.grid(row=0, column=0, sticky='nsew')
+
+# Create the scrollbars
+h_scrollbar = tk.Scrollbar(graph_frame, orient=tk.HORIZONTAL, command=graph_area.xview)
+h_scrollbar.grid(row=1, column=0, sticky='ew')
+v_scrollbar = tk.Scrollbar(graph_frame, orient=tk.VERTICAL, command=graph_area.yview)
+v_scrollbar.grid(row=0, column=1, sticky='ns')
+
+# Configure the canvas to use the scrollbars
+graph_area.configure(xscrollcommand=h_scrollbar.set, yscrollcommand=v_scrollbar.set)
+
+# Make the canvas expandable
+graph_frame.rowconfigure(0, weight=1)
+graph_frame.columnconfigure(0, weight=1)
+
+graph_area.bind("<Configure>", configure_scroll_region)
+# displays string if error
+if errorFlag:
+    graph_area.bind("<Configure>", update_text_size)
+
+'''Andrew's code use it if mine blows up'''
+# # Create the graph area
+# graph_area = tk.Canvas(graph_frame, bg='#2c2c2c')
+# graph_area.grid(row=0, column=1, columnspan=3, padx=10, pady=10, sticky='nsew')
 
 # Create the "Browse" button
 browse_button = ttk.Button(root, text="Browse", command=browse_file)
