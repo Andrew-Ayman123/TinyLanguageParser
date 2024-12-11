@@ -1,3 +1,4 @@
+import sys
 import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
@@ -25,14 +26,36 @@ def scan_file():
     global file_path
     global scanErrorMsg
     # Get the directory of the Python script
-    current_dir = os.path.dirname(os.path.abspath(__file__))
+    # current_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    # Locate files when running as a PyInstaller executable
+    if getattr(sys, 'frozen', False):  # Check if running as a PyInstaller bundle
+        current_dir = sys._MEIPASS  # Temporary directory where files are extracted
+    else:
+        current_dir = os.path.dirname(os.path.abspath(__file__))
 
-    # Path to the .exe in the same directory
+    # Paths to Scanner.exe and jre folder
     exe_path = os.path.join(current_dir, "Scanner.exe")
+    jre_path = os.path.join(current_dir, "jre")
+
     if file_path:
         output_file = os.path.join(os.path.dirname(file_path), "output.txt")
         args = [file_path, output_file]
-        result = subprocess.run([exe_path] + args, capture_output=True, text=True)
+
+        # Set the environment to use the bundled JRE
+        env = os.environ.copy()
+        env["JAVA_HOME"] = jre_path  # Ensure Scanner.exe uses the bundled JRE
+        env["PATH"] = jre_path + os.pathsep + env["PATH"]
+
+        # Run Scanner.exe with the updated environment
+        result = subprocess.run([exe_path] + args, capture_output=True, text=True, env=env)
+
+        # Path to the .exe in the same directory
+    # exe_path = os.path.join(current_dir, "Scanner.exe")
+    # if file_path:
+    #     output_file = os.path.join(os.path.dirname(file_path), "output.txt")
+    #     args = [file_path, output_file]
+    #     result = subprocess.run([exe_path] + args, capture_output=True, text=True)
         if result.stdout:
             display_string(result.stdout)
             scanErrorMsg = result.stdout
