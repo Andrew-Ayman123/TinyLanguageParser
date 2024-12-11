@@ -1,31 +1,14 @@
-read , READ
-x , IDENTIFIER
-; , SEMICOLON
-if , IF
-0 , NUMBER
-< , LESSTHAN
-x , IDENTIFIER
-then , THEN
-sum , IDENTIFIER
-:= , ASSIGN
-0 , NUMBER
-repeat , REPEAT
-sum , IDENTIFIER
-:= , ASSIGN
-sum , IDENTIFIER
-+ , PLUS
-x , IDENTIFIER
-; , SEMICOLON
-x , IDENTIFIER
-:= , ASSIGN
-x , IDENTIFIER
-- , MINUS
-1 , NUMBER
-until , UNTIL
-x , IDENTIFIER
-= , EQUAL
-0 , NUMBER
-; , SEMICOLON
-write , WRITE
-sum , IDENTIFIER
-end , END
+read a;
+read b; {input two integers}
+if 0 < a then {proceed only if both inputs are positive}
+if 0 < b then
+repeat
+if b < a then
+  a := a - b
+else
+  b := b - a
+end
+until a = b
+end
+end;
+write a {output GCD of the two numbers}

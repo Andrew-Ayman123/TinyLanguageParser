@@ -1,32 +1,9 @@
-read,READ
-x, IDENTIFIER
-;,SEMICOLON
-if,IF
-0,NUMBER
-<,LESSTHAN
-x,IDENTIFIER
-then,THEN
-fact, IDENTIFIER
-:=,ASSIGN
-1,NUMBER
-;,SEMICOLON
-repeat,REPEAT
-fact, IDENTIFIER
-:=,ASSIGN
-fact, IDENTIFIER
-*,MULT
-x, IDENTIFIER
-;,SEMICOLON
-x, IDENTIFIER
-:=,ASSIGN
-x, IDENTIFIER
--,MINUS
-1,NUMBER
-until,UNTIL
-x, IDENTIFIER
-=,EQUAL
-0,NUMBER
-;,SEMICOLON
-write,WRITE
-fact, IDENTIFIER
-end,END
+read x; {input an integer}
+if 0 < x then {don’t compute if x <= 0}
+sum := 0;
+repeat
+sum := sum + x;
+x := x - 1
+until x = 0;
+write sum {output sum of integers from 1 to x}
+end
