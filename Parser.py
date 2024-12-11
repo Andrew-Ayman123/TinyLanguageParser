@@ -2,35 +2,37 @@ from itertools import repeat
 
 from node import *
 
-list_of_tokens = [
-    ("read", "READ"),
+list_of_tokens = [] #stores the list of tokens in the form of [(value, type)]
+counter = 0 #counter to keep track of the line number
+errorFlag = False #flag to check if there is an error
+errorNode : Node = None #node to store the error message
 
-]
-counter = 0
-errorFlag = False
-errorNode : Node = None
-
+'''checks if the list is empty'''
 def is_empty(list):
     return len(list) == 0
 
-
+'''checks for the type of the next token'''
 def peek_Type():
     if list_of_tokens:
         return list_of_tokens[0][1]
     return None
 
-
+'''checks for the value of the next token'''
 def peek_Value():
     if list_of_tokens:
         return list_of_tokens[0][0]
     return None
 
-
+'''returns the next token'''
 def next_token():
     if list_of_tokens:
         return list_of_tokens[0]
 
-
+'''
+removes the next token from the list
+args: expected_token_type: the type of the token that is expected
+returns: True if the token is removed successfully, False otherwise
+'''
 def match(expected_token_type):
     global counter
     global errorFlag
@@ -72,7 +74,7 @@ def stmtSequence():
     while token_type == "SEMICOLON":
         match_result = match("SEMICOLON")
         if match_result != True:
-            return match_result
+            return
         new_stmt = statement()
         temp.setNext(new_stmt)
         temp = new_stmt
@@ -106,26 +108,26 @@ def statement():
 def if_stmt():
     match_result = match("IF")
     if match_result != True:
-        return match_result
+        return
     if_node = createIfNode()
     exp_node = exp()
     if_node.addChild(exp_node)
     match_result = match("THEN")
     if match_result != True:
-        return match_result
+        return
     stmt_node = stmtSequence()
     if_node.addChild(stmt_node)
 
     if peek_Type() == "ELSE":
         match_result = match("ELSE")
         if match_result != True:
-            return match_result
+            return
         stmt_node = stmtSequence()
         if_node.addChild(stmt_node)
 
     match_result = match("END")
     if match_result != True:
-        return match_result
+        return
 
     return if_node
 
@@ -136,7 +138,7 @@ def comparison_op():
     token_val = peek_Value()
     match_result = match(token_t)
     if match_result != True:
-        return match_result
+        return
     op_node = createOpNode(token_val)
     return op_node
 
@@ -165,7 +167,7 @@ def addop():
     token_val = peek_Value()
     match_result = match(token_t)
     if match_result != True:
-        return match_result
+        return
     op_node = createOpNode(token_val)
     return op_node
 
@@ -191,7 +193,7 @@ def mulop():
     token_val = peek_Value()
     match_result = match(token_t)
     if match_result != True:
-        return match_result
+        return
     op_node = createOpNode(token_val)
     return op_node
 
@@ -207,22 +209,22 @@ def factor():
     if token_type == "OPENBRACKET":
         match_result = match(token_type)
         if match_result != True:
-            return match_result
+            return
         node_exp = exp()
         node_temp = node_exp
         match_result = match("CLOSEBRACKET")
         if match_result != True:
-            return match_result
+            return
 
     elif token_type == "NUMBER":
         match_result = match(token_type)
         if match_result != True:
-            return match_result
+            return
         node_temp = createConstNode(token_val)
     elif token_type == "IDENTIFIER":
         match_result = match(token_type)
         if match_result != True:
-            return match_result
+            return
         node_temp = createIDNode(token_val)
     else:
         report_error("ERROR, expected NUMBER, IDENTIFIER or OPENBRACKET but got " + token_type+" at line number "+str(counter))
@@ -234,13 +236,13 @@ def factor():
 def repeat_stmt():
     match_result = match("REPEAT")
     if match_result != True:
-        return match_result
+        return
     r_node = createRepeatNode()
     stmt_node = stmtSequence()
     r_node.addChild(stmt_node)
     match_result = match("UNTIL")
     if match_result != True:
-        return match_result
+        return
     exp_node = exp()
     r_node.addChild(exp_node)
 
@@ -251,11 +253,11 @@ def repeat_stmt():
 def read_stmt():
     match_result = match("READ")
     if match_result != True:
-        return match_result
+        return
     identifier = peek_Value()
     match_result = match("IDENTIFIER")
     if match_result != True:
-        return match_result
+        return
     read_node = createReadNode(identifier)
 
     return read_node
@@ -265,7 +267,7 @@ def read_stmt():
 def write_stmt():
     match_result = match("WRITE")
     if match_result != True:
-        return match_result
+        return
     w_root = createWriteNode()
     expNode = exp()
     w_root.addChild(expNode)
@@ -278,12 +280,12 @@ def assign_stmt():
     token, token_t = next_token()
     match_result = match("IDENTIFIER")
     if match_result != True:
-        return match_result
+        return
     assign_node = createAssignNode(token)
 
     match_result = match("ASSIGN")
     if match_result != True:
-        return match_result
+        return
     exp_node = exp()
     assign_node.addChild(exp_node)
 
@@ -303,20 +305,8 @@ def exp():
     return root_node
 
 
-def contains_errors(node: Node):
-    if node.isError:
-        return node.data
-    for child in node.children:
-        result = contains_errors(child)
-        if result:
-            return result
-    if node.next:
-        result = contains_errors(node.next)
-        if result:
-            return result
 
-    return False
-
+'''Function to report an error'''
 def report_error(error_message):
     global errorFlag
     global errorNode

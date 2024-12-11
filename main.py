@@ -1,17 +1,18 @@
-
-
 import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
 from PIL import Image, ImageTk
 import os
 import Parser
+import subprocess
 from node import *
 from Parser import *
 
-
+file_path = ""
 def browse_file():
+    global file_path
     file_path = filedialog.askopenfilename()
+    print(file_path)
     if file_path:
         with open(file_path, 'r') as f:
             input_field.config(state='normal')
@@ -19,15 +20,43 @@ def browse_file():
             input_field.insert(tk.END, f.read())  # Insert the new data
             input_field.config(state='disabled')
 
+scanErrorMsg = ""
+def scan_file():
+    global file_path
+    global scanErrorMsg
+    # Get the directory of the Python script
+    current_dir = os.path.dirname(os.path.abspath(__file__))
 
+    # Path to the .exe in the same directory
+    exe_path = os.path.join(current_dir, "Scanner.exe")
+    if file_path:
+        output_file = os.path.join(os.path.dirname(file_path), "output.txt")
+        args = [file_path, output_file]
+        result = subprocess.run([exe_path] + args, capture_output=True, text=True)
+        if result.stdout:
+            display_string(result.stdout)
+            scanErrorMsg = result.stdout
+        print("Output:", result.stdout)
+        print("Errors:", result.stderr)
+        if output_file:
+            with open(output_file, 'r') as f:
+                input_field.config(state='normal')
+                input_field.delete(1.0, tk.END)  # Clear the Text widget first
+                input_field.insert(tk.END, f.read())  # Insert the new data
+                input_field.config(state='disabled')
+
+errorState = False # global variable states if there is an error
 def generate_canvas():
     global list_of_tokens
+    global errorState
+    errorState = False
     input_content = input_field.get("1.0", "end")
     graph_area.delete("all")
     Parser.list_of_tokens = split_input(input_content)
     print(Parser.list_of_tokens)
     root_node = program()
     if root_node.isError:
+        errorState = True
         display_string(root_node.data)
     else:
         draw_canvas(root_node, 100, 50, 100, 100)
@@ -80,7 +109,10 @@ def draw_canvas(node: Node, x: int, y: int, spacing_x: int, spacing_y: int) -> i
 
 # Update the text size when the canvas size changes
 def update_text_size(event):
-    display_string(errorNode.data)
+    if errorFlag:
+        display_string(errorNode.data)
+    elif errorState:
+        display_string(scanErrorMsg)
 
 
 # Update the scroll region when the canvas size changes
@@ -131,7 +163,7 @@ graph_frame.columnconfigure(0, weight=1)
 
 graph_area.bind("<Configure>", configure_scroll_region)
 # displays string if error
-if errorFlag:
+if errorFlag or errorState:
     graph_area.bind("<Configure>", update_text_size)
 
 '''Andrew's code use it if mine blows up'''
@@ -145,6 +177,10 @@ browse_button.grid(row=1, column=0, padx=10, pady=10, sticky='nsew')
 
 # Create the "Draw" button
 draw_button = ttk.Button(root, text="Draw", width=40, command=generate_canvas)
+draw_button.grid(row=1, column=2, padx=10, pady=10, sticky='nsew')
+
+# Create the "Scan" button
+draw_button = ttk.Button(root, text="Scan", width=40, command=scan_file)
 draw_button.grid(row=1, column=1, padx=10, pady=10, sticky='nsew')
 
 # Create the logo image
