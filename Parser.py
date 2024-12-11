@@ -5,7 +5,7 @@ from node import *
 list_of_tokens = [] #stores the list of tokens in the form of [(value, type)]
 counter = 0 #counter to keep track of the line number
 errorFlag = False #flag to check if there is an error
-errorNode : Node = None #node to store the error message
+errorNode : Node = createErrorNode('Error,Parsing not Successful') #node to store the error message
 
 '''checks if the list is empty'''
 def is_empty(list):
@@ -61,9 +61,12 @@ def program():
     errorNode = None
     errorFlag = False
     child = stmtSequence()
-    if not errorFlag:
+    if not errorFlag and is_empty(list_of_tokens):
         return child
     else:
+        if not errorFlag:
+            errorNode = createErrorNode("Error, Parsing not Successful")
+            errorFlag = True
         return errorNode
 
 
